@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-service
+  template:
+    metadata:
+      labels:
+        app: kafka-service
+    spec:
+      containers:
+        - name: kafka-service
+          image: kafka-service:1.0.0
+          ports:
+            - containerPort: 8085
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: default
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+spec:
+  selector:
+    app: kafka-service
+  ports:
+    - protocol: TCP
+      port: 8085
+      targetPort: 8085

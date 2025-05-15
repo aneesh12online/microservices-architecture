@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-creds')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/your-org/microservices-project.git'
+            }
+        }
+
+        stage('Build and Push Docker Images') {
+            steps {
+                script {
+                    def services = ['user-service', 'product-service', 'order-service', 'api-gateway', 'discovery-service', 'kafka-service', 'config-server']
+                    for (svc in services) {
+                        sh """
+                            docker build -t \$DOCKER_HUB_CREDENTIALS_USR/${svc}:latest ${svc}
+                            echo \$DOCKER_HUB_CREDENTIALS_PSW | docker login -u \$DOCKER_HUB_CREDENTIALS_USR --password-stdin
+                            docker push \$DOCKER_HUB_CREDENTIALS_USR/${svc}:latest
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    def files = ['user-service', 'product-service', 'order-service', 'api-gateway', 'discovery-service', 'kafka-service', 'config-server']
+                    for (f in files) {
+                        sh "kubectl apply -f ${f}/deployment.yaml"
+                    }
+                }
+            }
+        }
+    }
+}

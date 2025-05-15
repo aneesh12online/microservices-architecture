@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-server
+  labels:
+    app: config-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config-server
+  template:
+    metadata:
+      labels:
+        app: config-server
+    spec:
+      containers:
+        - name: config-server
+          image: aneeshkumar/config-server:latest # Replace with your Docker Hub repo/image
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8888
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/local-config-repo
+      volumes:
+        - name: config-volume
+          configMap:
+            name: local-config-repo # Optional: If mounting config from ConfigMap
+-----
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: config-server
+spec:
+  selector:
+    app: config-server
+  ports:
+    - protocol: TCP
+      port: 8888
+      targetPort: 8888
+  type: ClusterIP
